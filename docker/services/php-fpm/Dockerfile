@@ -2,12 +2,12 @@
 # - https://github.com/laradock
 # - https://github.com/laradock/php-fpm
 # - https://github.com/Microsoft/msphpsql/wiki/Install-and-configuration
-
-FROM php:7.2-fpm
+ARG VERSION=${VERSION}
+FROM php:${VERSION}-fpm
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -yqq \
-    && apt-get install -yqq --no-install-recommends \
-        curl \
+    && apt-get install -y \
         libmemcached-dev \
         libz-dev \
         libpq-dev \
@@ -16,9 +16,10 @@ RUN apt-get update -yqq \
         libfreetype6-dev \
         libssl-dev \
         libmcrypt-dev \
-        libzip-dev \
         zip \
         apt-utils \
+        curl \ 
+        gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Gd
@@ -28,14 +29,17 @@ RUN docker-php-ext-configure gd \
     docker-php-ext-install gd
 
 # Configure Zip
-RUN docker-php-ext-configure zip --with-libzip && \
-    docker-php-ext-install zip
+RUN apt-get update -yqq \
+    && apt-get install -y cmake zlib1g-dev openssl libbz2-dev \
+    && mkdir /tmp/libzip && cd /tmp/libzip && curl -sSLO https://libzip.org/download/libzip-1.5.1.tar.gz \
+    && tar zxf libzip-1.5.1.tar.gz && cd libzip-1.5.1/ && mkdir build && cd build && cmake ../ \
+    && make > /dev/null && make install \
+    && docker-php-ext-configure zip --with-libzip=/usr/local/lib/libzip.so \
+    && docker-php-ext-install zip
 
 # Install extensions using the helper script provided by the base image
 RUN docker-php-ext-install bcmath \
-    opcache \
-    tokenizer \
-    json
+    opcache
 
 COPY ./opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
@@ -44,7 +48,7 @@ USER root
 ARG INSTALL_IMAGE_OPTIMIZERS=false
 RUN if [ ${INSTALL_IMAGE_OPTIMIZERS} = true ]; then \
     apt-get update -yqq && \
-    apt-get install -yqq --force-yes jpegoptim optipng pngquant gifsicle \
+    apt-get install -y --force-yes jpegoptim optipng pngquant gifsicle \
 ;fi
 
 # Install Imagemagick
@@ -52,7 +56,7 @@ USER root
 ARG INSTALL_IMAGEMAGICK=false
 RUN if [ ${INSTALL_IMAGEMAGICK} = true ]; then \
     apt-get update -yqq && \
-    apt-get install -yqq libmagickwand-dev imagemagick && \
+    apt-get install -y libmagickwand-dev imagemagick && \
     pecl install imagick && \
     docker-php-ext-enable imagick \
 ;fi
@@ -61,7 +65,7 @@ RUN if [ ${INSTALL_IMAGEMAGICK} = true ]; then \
 ARG INSTALL_INTL=false
 RUN if [ ${INSTALL_INTL} = true ]; then \
     apt-get update -yqq && \
-    apt-get install -yqq zlib1g-dev libicu-dev g++ && \
+    apt-get install -y zlib1g-dev libicu-dev g++ && \
     docker-php-ext-configure intl && \
     docker-php-ext-install intl \
 ;fi
@@ -69,12 +73,12 @@ RUN if [ ${INSTALL_INTL} = true ]; then \
 # Install Sql Server Driver
 # - Add Microsoft repo for Microsoft ODBC Driver 13 for Linux
 RUN apt-get update -yqq \
-    && apt-get install -yqq apt-transport-https gnupg \
+    && apt-get install -y apt-transport-https \
     && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
     && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update -yqq \
     # - Install Dependencies
-    && ACCEPT_EULA=Y apt-get install -yqq unixodbc unixodbc-dev libgss3 odbcinst msodbcsql locales \
+    && ACCEPT_EULA=Y apt-get install -y unixodbc unixodbc-dev libgss3 odbcinst msodbcsql locales \
     && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
     && ln -s /etc/locale.alias /usr/share/locale/locale.alias \
     && locale-gen \
@@ -85,12 +89,16 @@ RUN apt-get update -yqq \
     && php -m | grep -q 'sqlsrv'
 
 # Custom NGINX configuration
-#COPY ./laravel.ini /usr/local/etc/php/conf.d
-#COPY ./xlaravel.pool.conf /usr/local/etc/php-fpm.d/
+COPY ./laravel.ini /usr/local/etc/php/conf.d
+COPY ./xlaravel.pool.conf /usr/local/etc/php-fpm.d/
+COPY ./log.conf /usr/local/etc/php-fpm.d/
 
+# Create log directory
 USER root
+RUN mkdir -p /var/log/php-fpm
 
 # Clean up
+USER root
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     rm /var/log/lastlog /var/log/faillog
