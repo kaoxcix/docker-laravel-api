@@ -1,22 +1,27 @@
 #!/bin/sh
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
-if [ "$1" != "-y" ] ;then
-    printf "Do you want to build new docker (y/n)? " 
-    read answer
-else
-    answer=y
-fi
+cd ${SCRIPT_DIR}
+cd ..
 
-if [ "$answer" != "${answer#[Yy]}" ] ;then
-
-    cd ${SCRIPT_DIR}
-    cd ..
+if [ -e .env ]
+then
+    if [ "$1" != "-y" ] ;then
+        printf "Do you want to build new docker (y/n)? " 
+        read answer
+    else
+        answer=y
+    fi
     
-    docker-compose build --no-cache
-    docker-compose up -d
-    docker-compose ps
-    
+    if [ "$answer" != "${answer#[Yy]}" ] ;then
+        
+        docker-compose build --no-cache
+        docker-compose up -d
+        docker-compose ps
+        
+    else
+        echo Goodbye!!!
+    fi
 else
-    echo Goodbye!!!
+    echo Please MAKE .env file!!!
 fi
