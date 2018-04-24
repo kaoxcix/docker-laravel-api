@@ -4,26 +4,21 @@ services:
   # Proxy Service
   proxy:
     environment:
-      - TZ=${GENERAL_TIMEZONE}
-    image: nginx:${NGINX_VERSION}-alpine
-    ports:
-      - "${PROXY_HOST_HTTP_PORT}:80"
-    volumes:
-      - ./docker/logs/proxy:/var/log/nginx
-      - ./docker/services/proxy/common:/etc/nginx/conf.d/common
-      - ./docker/services/proxy/default.conf:/etc/nginx/conf.d/default.conf
+      TZ: ${GENERAL_TIMEZONE}
     restart: always
     depends_on:
       - nginx-api
       - nginx-front
+    image: jwilder/nginx-proxy
+    ports:
+      - "${PROXY_HOST_HTTP_PORT}:80"
+    volumes:
+      - ./docker/logs/proxy:/var/log/nginx
+      - /var/run/docker.sock:/tmp/docker.sock:ro
 
   # API Service
   nginx-api:
-    environment:
-      - TZ=${GENERAL_TIMEZONE}
     image: nginx:${NGINX_VERSION}-alpine
-    expose:
-      - "80"
     volumes:
       - ${PATH_API_SRC}:/var/www/html
       - ./docker/logs/nginx-api:/var/log/nginx
@@ -31,6 +26,13 @@ services:
     restart: always
     depends_on:
       - php-fpm
+    environment:
+      TZ: ${GENERAL_TIMEZONE}
+      VIRTUAL_HOST: ${API_VIRTUAL_HOST}
+      VIRTUAL_PORT: ${API_HOST_HTTP_PORT}
+    ports:
+      - "${API_HOST_HTTP_PORT}:80"
+      
   php-fpm:
     environment:
       - TZ=${GENERAL_TIMEZONE}
@@ -50,16 +52,18 @@ services:
 
   # Front Service
   nginx-front:
-    environment:
-      - TZ=${GENERAL_TIMEZONE}
     image: nginx:${NGINX_VERSION}-alpine
-    expose:
-      - "80"
     volumes:
       - ${PATH_FRONT_SRC}:/var/www/html
       - ./docker/logs/nginx-front:/var/log/nginx
       - ./docker/services/nginx-front/default.conf:/etc/nginx/conf.d/default.conf
     restart: always
+    environment:
+      TZ: ${GENERAL_TIMEZONE}
+      VIRTUAL_HOST: ${FRONT_VIRTUAL_HOST}
+      VIRTUAL_PORT: ${FRONT_HOST_HTTP_PORT}
+    ports:
+      - "${FRONT_HOST_HTTP_PORT}:80"
 
   # MSSQL Service
   mssql:
