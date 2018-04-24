@@ -21,7 +21,7 @@ MSSQL_SA_PASSWORD=StrongP@ssw0rd
 NGINX_VERSION=1.13.12
 
 ### PATH
-PATH_API_SRC=./src/api
+PATH_API_SRC=./src/api/public
 PATH_FRONT_SRC=./src/front
 
 ### PHP_FPM
