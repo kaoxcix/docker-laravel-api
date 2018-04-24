@@ -1,4 +1,7 @@
 # Docker for Web API by Laravel (And SPA)
+  
+**This docker's tested in MacOS only.**  
+
 This docker contains:
 - Nginx Proxy
 - Nginx with PHP7-FPM (Laravel API)
