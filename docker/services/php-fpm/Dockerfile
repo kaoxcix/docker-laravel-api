@@ -88,6 +88,11 @@ RUN apt-get update -yqq \
     && php -m | grep -q 'pdo_sqlsrv' \
     && php -m | grep -q 'sqlsrv'
 
+# Install Redis
+RUN printf "\n" | pecl install -o -f redis \
+    &&  rm -rf /tmp/pear \
+    &&  docker-php-ext-enable redis
+
 # Custom NGINX configuration
 COPY ./laravel.ini /usr/local/etc/php/conf.d
 COPY ./xlaravel.pool.conf /usr/local/etc/php-fpm.d/
