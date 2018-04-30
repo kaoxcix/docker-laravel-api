@@ -16,7 +16,7 @@ if [ "$answer" != "${answer#[Yy]}" ] ;then
     cd ${SCRIPT_DIR}
     cd ..
     
-    docker-compose down
+    docker-compose down --volume
     docker-compose build --no-cache
     docker-compose up -d
     docker-compose ps
