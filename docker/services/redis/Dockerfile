@@ -1,6 +1,6 @@
 FROM redis:latest
 
-VOLUME /data
+#VOLUME /data
 
 EXPOSE 6379
 

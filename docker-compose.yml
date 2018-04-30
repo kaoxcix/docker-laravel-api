@@ -81,8 +81,8 @@ services:
     ports:
       - "${MSSQL_HOST_PORT}:1433"
     volumes:
-    # - ./docker/services/mssql/data:/var/opt/mssql
       - ./docker/logs/mssql:/var/opt/mssql/log
+      - mssql-server-linux-data:/var/opt/mssql/data
       
   adminer:
     build:
@@ -152,6 +152,8 @@ services:
       context: docker/services/beanstalkd
     environment:
       - TZ=${GENERAL_TIMEZONE}
+    volumes:
+      - ./docker/data/beanstalkd:/var/lib/beanstalkd/data
    
   beanstalk-console:
     build: 
@@ -164,3 +166,6 @@ services:
       - VIRTUAL_PORT=2080
     ports:
      - "${BEANSTALKD_CONSOLE_HOST_HTTP_PORT}:2080"
+
+volumes:
+  mssql-server-linux-data:

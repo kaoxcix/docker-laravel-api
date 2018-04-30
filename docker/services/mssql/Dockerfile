@@ -12,7 +12,7 @@ COPY . /usr/src/app
 
 RUN chmod +x /usr/src/app/create_table.sh
 
-VOLUME /var/opt/mssql
+#VOLUME /var/opt/mssql
 
 EXPOSE 1433
 
