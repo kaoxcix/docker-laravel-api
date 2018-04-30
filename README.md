@@ -6,7 +6,11 @@ This docker contains:
 - Nginx Proxy
 - Nginx with PHP7-FPM (Laravel API)
 - Nginx (Front SPA)
-- SQL Server (Main database)
+- SQL Server (Database)
+- Beanstalk (Queue)
+- Laravel Echo Server (Broadcasting)
+- Redis (In-Memory Store)
+- Mailcatcher (Fake SMTP)
 
 ## How to use (for first time!)
 1. Make .env `cp env-example .env`
@@ -18,20 +22,23 @@ This docker contains:
 Network list:  
 - Application
 
-    |Service Name|Local Address / Port|Virtual host|
+    |Service Name|Virtual host|Local Address / Port|
     |------------|----|------------|
     |Proxy|http://localhost:80|-| 
-    |API                |http://localhost:8001  |http://api.laravel.test| 
-    |Front              |http://localhost:8002  |http://front.laravel.test|
-    |SQL Server         |:1433                  |-| 
-    |Redis              |:6379                  |-| 
+    |API                |http://api.laravel.test            |http://localhost:8001|
+    |Front              |http://front.laravel.test          |http://localhost:8002|
+    |Laravel-Echo-Server|http://broadcasting.laravel.test   |http://localhost:8003|
+    |Redis              |-                                  |:6379| 
+    |SQL-Server         |-                                  |:1433| 
 
 - Development tools
 
-    |Service Name|Local Address / Port|Virtual host|
+    |Service Name|Virtual host|Local Address / Port|
     |------------|----|------------|
-    |Mailcatcher-Client |http://localhost:9001  |http://devtool-mailcatcher.laravel.test| 
-    |Redis-Commander    |http://localhost:9002  |http://devtool-redis.laravel.test| 
+    |Adminer                        |http://dt-adminer.laravel.test       |http://localhost:9003|
+    |Beanstalk-Console              |http://dt-queue.laravel.test         |http://localhost:9004|
+    |Mailcatcher-Client             |http://dt-mailcatcher.laravel.test   |http://localhost:9002|
+    |Redis-Commander                |http://dt-redis.laravel.test         |http://localhost:9001|
 
 ## Structure
 ### Directory
@@ -39,6 +46,7 @@ Network list:
 |--------|------|
 |bin|Execution files for controlling Docker|
 |docker|Docker components|
+|docker/data|data for each service|
 |docker/log|Log for each service|
 |docker/services|Dockerfile and configuration|
 |src|Project files|
@@ -54,6 +62,8 @@ Network list:
 |docker-rebuild-deeply|Rebuild and start Docker (without Docker caching)|
 |docker-start|Start Docker (build Docker first!)|
 |docker-stop|Stop Docker (Just stopping. It's not removing container)|
+|docker-ports|Lists all ports|
+|docker-vhosts|Lists all Virtual Host|
 
 **Note.**  
 - It's shortcut for `docker-compose` command.
