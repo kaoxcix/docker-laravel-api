@@ -1,0 +1,35 @@
+#!/bin/sh
+SCRIPT_DIR=$(cd $(dirname $0); pwd)
+
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+cd ${SCRIPT_DIR}
+cd ..
+
+ALL_PORTS=$(cat .env | grep -v ^# | grep 'PORT' | sed 's/_HOST_HTTP_PORT//g' | sed 's/_HOST_PORT//g') 
+
+echo
+echo "${GREEN}APPLICATION:${NC}"
+VHOSTS=($(cat .env | grep -v ^# | grep -v 'VIRTUAL_HOST=dt'| grep 'VIRTUAL_HOST=' | sort)) 
+RESULT="SERVICE_NAME LOCAL_ADDRESS LOCAL_IP"
+RESULT+="\n----------------------------- ----------------------------------- -------------------------"
+for VHOST in ${VHOSTS[@]}; do 
+    RESULT+="\n$(echo "${VHOST}" | sed 's/_VIRTUAL_HOST=/ http:\/\//g')"
+    RESULT+=" $(echo "${ALL_PORTS}" | grep "$(echo "${VHOST}" | sed 's/_VIRTUAL_HOST.*//g')" | sed 's/^.*=/http:\/\/localhost:/g')"
+done
+echo  "${RESULT}" | column -t
+
+echo
+echo "${GREEN}DEVELOPMENT TOOLS:${NC}"
+VHOSTS=($(cat .env | grep -v ^# | grep 'VIRTUAL_HOST=dt' | sort)) 
+RESULT="SERVICE_NAME LOCAL_ADDRESS LOCAL_IP"
+RESULT+="\n----------------------------- ----------------------------------- -------------------------"
+for VHOST in ${VHOSTS[@]}; do 
+    RESULT+="\n$(echo "${VHOST}" | sed 's/_VIRTUAL_HOST=/ http:\/\//g')"
+    RESULT+=" $(echo "${ALL_PORTS}" | grep "$(echo "${VHOST}" | sed 's/_VIRTUAL_HOST.*//g')" | sed 's/^.*=/http:\/\/localhost:/g')"
+done
+echo  "${RESULT}" | column -t
+
+echo
+

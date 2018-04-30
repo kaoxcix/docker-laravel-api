@@ -19,6 +19,7 @@ then
         docker-compose up -d
         docker-compose ps
         
+        ${SCRIPT_DIR}/docker-vhosts
     else
         echo Goodbye!!!
     fi

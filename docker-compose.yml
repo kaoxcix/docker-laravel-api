@@ -84,7 +84,19 @@ services:
     # - ./docker/services/mssql/data:/var/opt/mssql
       - ./docker/logs/mssql:/var/opt/mssql/log
       
-  ### Fake SMTP Service ###########################################################
+  adminer:
+    build:
+      context: ./docker/services/adminer
+    depends_on:
+      - mssql
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+      - VIRTUAL_HOST=${ADMINER_VIRTUAL_HOST}
+      - VIRTUAL_PORT=8080
+    ports:
+      - "${ADMINER_HOST_HTTP_PORT}:8080"
+      
+  ### Mail Service (Fake SMTP) ###########################################################
   mailcatcher:
     environment:
         - TZ=${GENERAL_TIMEZONE}
@@ -96,7 +108,8 @@ services:
   
   ### Cache Service ###############################################################
   redis:
-    build: ./docker/services/redis
+    build: 
+      context: ./docker/services/redis
     environment:
       - TZ=${GENERAL_TIMEZONE}
     ports:
@@ -108,7 +121,7 @@ services:
   redis-commander:
     environment:
       - TZ=${GENERAL_TIMEZONE}
-      - REDIS_HOSTS=redis:6379
+      - REDIS_HOSTS=redis:redis:6379
       - VIRTUAL_HOST=${REDIS_COMMANDER_VIRTUAL_HOST}
       - VIRTUAL_PORT=8081
     depends_on:
@@ -117,17 +130,37 @@ services:
     ports:
       - "${REDIS_COMMANDER_HOST_HTTP_PORT}:8081"
     restart: always
-    
-  ### SQL Server GUI Service ######################################################
-  adminer:
+      
+  ### Broadcasting Service ########################################################
+  laravel-echo-server:
     build:
-      context: ./docker/services/adminer
-    depends_on:
-      - mssql
+      context: ./docker/services/laravel-echo-server
     environment:
       - TZ=${GENERAL_TIMEZONE}
-      - VIRTUAL_HOST=${ADMINER_VIRTUAL_HOST}
-      - VIRTUAL_PORT=8080
+      - VIRTUAL_HOST=${LARAVEL_ECHO_SERVER_VIRTUAL_HOST}
+      - VIRTUAL_PORT=6001
+    depends_on:
+      - redis 
     ports:
-      - "${ADMINER_HOST_PORT}:8080"
+      - "${LARAVEL_ECHO_SERVER_HOST_HTTP_PORT}:6001"
+    volumes:
+      - ./docker/services/laravel-echo-server/laravel-echo-server.json:/app/laravel-echo-server.json:ro
     
+  ## Queue Service
+  beanstalkd:
+    build: 
+      context: docker/services/beanstalkd
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+   
+  beanstalk-console:
+    build: 
+      context: docker/services/beanstalk-console
+    depends_on:
+      - beanstalkd
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+      - VIRTUAL_HOST=${BEANSTALKD_CONSOLE_VIRTUAL_HOST}
+      - VIRTUAL_PORT=2080
+    ports:
+     - "${BEANSTALKD_CONSOLE_HOST_HTTP_PORT}:2080"

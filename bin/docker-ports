@@ -1,0 +1,47 @@
+#!/bin/sh
+SCRIPT_DIR=$(cd $(dirname $0); pwd)
+
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+cd ${SCRIPT_DIR}
+cd ..
+
+ALL_PORTS=$(cat .env | grep -v ^# | grep 'PORT' | sed 's/_HOST_HTTP_PORT//g' | sed 's/_HOST_PORT//g') 
+
+## APPLICATION ###################################################################
+echo
+echo "${GREEN}APPLICATION:${NC}"
+PORTS=($(cat .env | grep -v ^# | grep 'PORT=8' | sed 's/^.*=//g' | sort)) 
+RESULT="SERVICE_NAME PORT"
+RESULT+="\n------------------------------------------- --------------"
+for PORT in ${PORTS[@]}; do 
+    RESULT+="\n$(echo "${ALL_PORTS}" | grep "^.*=${PORT}$" | sed 's/=/ /g')"
+done
+echo  "${RESULT}" | column -t
+
+### DEVELOPMENT TOOLS #############################################################
+echo
+echo "${GREEN}DEVELOPMENT TOOLS:${NC}"
+PORTS=($(cat .env | grep -v ^# | grep 'PORT=9' | sed 's/^.*=//g' | sort)) 
+RESULT="SERVICE_NAME PORT"
+RESULT+="\n------------------------------------------- --------------"
+for PORT in ${PORTS[@]}; do 
+    RESULT+="\n$(echo "${ALL_PORTS}" | grep "^.*=${PORT}$" | sed 's/=/ /g')"
+done
+echo  "${RESULT}" | column -t
+
+### OTHER #########################################################################
+echo
+echo "${GREEN}DEVELOPMENT TOOLS:${NC}"
+PORTS=($(cat .env | grep -v ^# | grep -v 'PORT=8' | grep -v 'PORT=9' | grep 'PORT' | sed 's/^.*=//g' | sort)) 
+RESULT="SERVICE_NAME PORT"
+RESULT+="\n------------------------------------------- --------------"
+for PORT in ${PORTS[@]}; do 
+    RESULT+="\n$(echo "${ALL_PORTS}" | grep "^.*=${PORT}$" | sed 's/=/ /g')"
+done
+echo  "${RESULT}" | column -t
+
+###################################################################################
+
+echo
