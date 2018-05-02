@@ -10,7 +10,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # - Add Microsoft repo for Microsoft ODBC Driver 13 for Linux
 RUN apt-get update -yqq \
-  && apt-get install -y apt-transport-https gnupg \
+  && apt-get install -y apt-transport-https gnupg apt-utils \
   && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
   && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
   && apt-get update -yqq \
