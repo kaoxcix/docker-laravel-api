@@ -75,25 +75,24 @@ RUN if [ ${INSTALL_INTL} = true ]; then \
 RUN apt-get update -yqq \
     && apt-get install -y apt-transport-https \
     && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update -yqq \
     # - Install Dependencies
-    && ACCEPT_EULA=Y apt-get install -y unixodbc unixodbc-dev libgss3 odbcinst msodbcsql locales \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev locales \
     && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
     && ln -s /etc/locale.alias /usr/share/locale/locale.alias \
     && locale-gen \
-    # - Install pdo_sqlsrv and sqlsrv from PECL. Replace pdo_sqlsrv-4.1.8preview with preferred version.
-    && pecl install pdo_sqlsrv-4.1.8preview sqlsrv-4.1.8preview \
-    && docker-php-ext-enable pdo_sqlsrv sqlsrv \
-    && php -m | grep -q 'pdo_sqlsrv' \
-    && php -m | grep -q 'sqlsrv'
+    # - Install pdo_sqlsrv and sqlsrv from PECL
+    && pecl install sqlsrv \
+    && pecl install pdo_sqlsrv \
+    && docker-php-ext-enable pdo_sqlsrv sqlsrv
 
 # Install Redis
 RUN printf "\n" | pecl install -o -f redis \
     &&  rm -rf /tmp/pear \
     &&  docker-php-ext-enable redis
 
-# Custom NGINX configuration
+# Custom configuration
 COPY ./laravel.ini /usr/local/etc/php/conf.d
 COPY ./xlaravel.pool.conf /usr/local/etc/php-fpm.d/
 COPY ./log.conf /usr/local/etc/php-fpm.d/
