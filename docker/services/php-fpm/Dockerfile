@@ -40,7 +40,6 @@ RUN apt-get update -yqq \
 # Install extensions using the helper script provided by the base image
 RUN docker-php-ext-install bcmath \
     opcache
-
 COPY ./opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Install Image Optimizers
@@ -71,7 +70,7 @@ RUN if [ ${INSTALL_INTL} = true ]; then \
 ;fi
 
 # Install Sql Server Driver
-# - Add Microsoft repo for Microsoft ODBC Driver 13 for Linux
+# - Add Microsoft repo for Microsoft ODBC Driver 17 for Linux
 RUN apt-get update -yqq \
     && apt-get install -y apt-transport-https \
     && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
@@ -86,6 +85,17 @@ RUN apt-get update -yqq \
     && pecl install sqlsrv \
     && pecl install pdo_sqlsrv \
     && docker-php-ext-enable pdo_sqlsrv sqlsrv
+
+# Install the PHP pdo_mysql extention
+RUN docker-php-ext-install pdo_mysql mysqli
+
+# Install the PHP pdo_pgsql extention
+RUN docker-php-ext-install pdo_pgsql pgsql \
+    # Install the pgsql client
+    && mkdir -p /usr/share/man/man1 \
+    && mkdir -p /usr/share/man/man7 \
+    && apt-get update -yqq \
+    && apt-get install -y postgresql-client
 
 # Install Redis
 RUN printf "\n" | pecl install -o -f redis \

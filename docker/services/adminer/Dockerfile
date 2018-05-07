@@ -8,21 +8,37 @@ FROM php:${VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# - Add Microsoft repo for Microsoft ODBC Driver 13 for Linux
+# - Add Microsoft repo for Microsoft ODBC Driver 17 for Linux
 RUN apt-get update -yqq \
-  && apt-get install -y apt-transport-https gnupg apt-utils \
-  && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-  && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-  && apt-get update -yqq \
-  # - Install Dependencies
-  && ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev locales \
-  && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
-  && ln -s /etc/locale.alias /usr/share/locale/locale.alias \
-  && locale-gen \
-  # - Install pdo_sqlsrv and sqlsrv from PECL
-  && pecl install sqlsrv \
-  && pecl install pdo_sqlsrv \
-  && docker-php-ext-enable pdo_sqlsrv sqlsrv
+    && apt-get install -y apt-transport-https gnupg apt-utils \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update -yqq \
+    # - Install Dependencies
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev locales \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && ln -s /etc/locale.alias /usr/share/locale/locale.alias \
+    && locale-gen \
+    # - Install pdo_sqlsrv and sqlsrv from PECL
+    && pecl install sqlsrv \
+    && pecl install pdo_sqlsrv \
+    && docker-php-ext-enable pdo_sqlsrv sqlsrv
+  
+# Install the PHP pdo_mysql extention
+RUN docker-php-ext-install pdo_mysql mysqli
+
+# Install the PHP pdo_pgsql extention
+RUN apt-get update -yqq \
+    && apt-get install -y libpq-dev \
+    # Install the pgsql client
+    && mkdir -p /usr/share/man/man1 \
+    && mkdir -p /usr/share/man/man7 \
+    && apt-get update -yqq \
+    && apt-get install -y postgresql-client
+
+# Install the mongodb extension
+RUN pecl install mongodb \
+    && docker-php-ext-enable mongodb
 
 # Clean up
 USER root

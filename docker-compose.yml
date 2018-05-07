@@ -5,11 +5,6 @@ services:
   proxy:
     environment:
       - TZ=${GENERAL_TIMEZONE}
-    depends_on:
-      - nginx-api
-      - nginx-front
-      - mailcatcher
-      - redis-commander
     image: jwilder/nginx-proxy
     ports:
       - "${PROXY_HOST_HTTP_PORT}:80"
@@ -26,7 +21,6 @@ services:
       - VIRTUAL_PORT=80
     depends_on:
       - php-fpm
-      - mssql
     image: nginx:${NGINX_VERSION}-alpine
     ports:
       - "${API_HOST_HTTP_PORT}:80"
@@ -68,7 +62,7 @@ services:
       - ./docker/logs/nginx-front:/var/log/nginx
       - ./docker/services/nginx-front/default.conf:/etc/nginx/conf.d/default.conf
 
-  ### MSSQL Service ###############################################################
+  ### Database Service ###############################################################
   mssql:
     build:
       context: ./docker/services/mssql
@@ -81,7 +75,9 @@ services:
     ports:
       - "${MSSQL_HOST_PORT}:1433"
     volumes:
-      - ./docker/logs/mssql:/var/opt/mssql/log
+      # - ./docker/logs/mssql:/var/opt/mssql/log
+      # TODO: OSX Problem, Cannot mount volume
+      # - ./docker/data/mssql:/var/opt/mssql/data
       - mssql-server-linux-data:/var/opt/mssql/data
       
   adminer:
@@ -99,6 +95,65 @@ services:
       - "${ADMINER_HOST_HTTP_PORT}:8080"
     volumes:
       - ./docker/services/adminer/src:/var/www/html
+      
+  mariadb:
+    build:
+      context: ./docker/services/mariadb
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+      - MYSQL_DATABASE=${MARIADB_DATABASE}
+      - MYSQL_USER=${MARIADB_USER}
+      - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "${MARIADB_HOST_PORT}:3306"
+    volumes:
+      - ./docker/data/mariadb:/var/lib/mysql
+      - ${MARIADB_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+
+  phpmyadmin:
+    build: ./docker/services/phpmyadmin
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+      - PMA_HOST=mariadb
+      - MYSQL_USER=${PHPMYADMIN_USER}
+      - MYSQL_PASSWORD=${PHPMYADMIN_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${PHPMYADMIN_ROOT_PASSWORD}
+      - VIRTUAL_HOST=${PHPMYADMIN_VIRTUAL_HOST}
+      - VIRTUAL_PORT=80
+    ports:
+      - "${PHPMYADMIN_HOST_HTTP_PORT}:80"
+    depends_on:
+      - mariadb
+
+  postgres:
+    build: ./docker/services/postgres
+    volumes:
+      - ./docker/data/postgres:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+  pgadmin:
+    build: ./docker/services/pgadmin
+    environment:
+      - TZ=${GENERAL_TIMEZONE}
+      - VIRTUAL_HOST=${PGADMIN_VIRTUAL_HOST}
+      - VIRTUAL_PORT=5050
+      - DEFAULT_USER=${PGADMIN_DEFAULT_USER}
+      - DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - MAIL_SERVER=mailcatcher
+      - MAIL_PORT=1025
+    ports:
+      - "${PGADMIN_HOST_HTTP_PORT}:5050"
+    volumes:
+      - ./docker/data/pgadmin:/var/lib/pgadmin/storage/pgadmin4
+    depends_on:
+      - postgres
   
   ### Mail Service (Fake SMTP) ###########################################################
   mailcatcher:
